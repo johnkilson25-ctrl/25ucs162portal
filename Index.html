@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coming Soon: Theatres by District</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ece9f5;--card:#fff;--ink:#1e1b3a;--mute:#5d5a7a;--line:#d6d1e8;--accent:#c2185b;--accent-ink:#fff;--teal:#0f7f81;--chip:#dcd7ee;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1830;--card:#27233f;--ink:#f1eefb;--mute:#aaa6c9;--line:#3b3660;--accent:#ff6fa5;--accent-ink:#1b1830;--teal:#52d1d3;--chip:#352f58}}
+:root[data-theme="dark"]{--bg:#1b1830;--card:#27233f;--ink:#f1eefb;--mute:#aaa6c9;--line:#3b3660;--accent:#ff6fa5;--accent-ink:#1b1830;--teal:#52d1d3;--chip:#352f58}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding:28px 18px 48px}
+h1{font-family:"Bricolage Grotesque",Georgia,sans-serif;font-weight:800;font-size:clamp(2rem,6vw,3.4rem);line-height:1;margin:0 0 8px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 24px;max-width:56ch}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+label{font-weight:600;font-size:.9rem;display:block;margin-bottom:4px}
+select{width:100%;padding:12px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+select:focus-visible,button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.chip,.tab{border:0;border-radius:99px;padding:8px 14px;background:var(--chip);color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+.chip[aria-pressed="true"],.tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.spacer{flex:1}
+.saved{font-weight:600;color:var(--teal)}
+.summary{font-family:"Bricolage Grotesque",Georgia,sans-serif;font-size:1.3rem;font-weight:600;margin:20px 0 12px}
+.theatre{background:var(--card);border-radius:14px;margin-bottom:16px;display:grid;grid-template-columns:1fr;overflow:hidden;border:1px solid var(--line)}
+.thead{padding:16px 18px;border-bottom:2px dashed var(--line)}
+.thead h3{margin:0;font-family:"Bricolage Grotesque",Georgia,sans-serif;font-size:1.25rem}
+.thead p{margin:2px 0 0;color:var(--mute);font-size:.9rem}
+.film{display:grid;grid-template-columns:76px 1fr auto;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center}
+.film:last-child{border-bottom:0}
+.date{background:var(--accent);color:var(--accent-ink);border-radius:10px;text-align:center;padding:8px 4px;line-height:1.1}
+.date b{display:block;font-size:1.5rem;font-family:"Bricolage Grotesque",Georgia,sans-serif}
+.date span{font-size:.8rem;font-weight:600}
+.film h4{margin:0;font-size:1.05rem}
+.meta{color:var(--mute);font-size:.88rem;margin:2px 0 6px}
+.times{display:flex;flex-wrap:wrap;gap:6px}
+.times span{border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:.82rem}
+.remind{border:2px solid var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer}
+.remind[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.empty{background:var(--card);border:2px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--mute)}
+.note{margin-top:28px;color:var(--mute);font-size:.85rem}
+@media (max-width:560px){.controls{grid-template-columns:1fr}.film{grid-template-columns:64px 1fr}.remind{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Coming soon at your district's theatres</h1>
+  <p class="sub">Pick a state and district to see which upcoming releases each theatre will screen, with release dates and show times.</p>
+
+  <div class="controls">
+    <div><label for="state">State</label><select id="state"></select></div>
+    <div><label for="district">District</label><select id="district"></select></div>
+  </div>
+
+  <div class="row" role="group" aria-label="Filter by language" id="langs"></div>
+
+  <div class="row">
+    <div role="tablist" aria-label="View" style="display:flex;gap:8px">
+      <button class="tab" role="tab" id="t-theatre" aria-selected="true">By theatre</button>
+      <button class="tab" role="tab" id="t-movie" aria-selected="false">By movie</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="saved" id="saved" aria-live="polite"></span>
+  </div>
+
+  <div class="summary" id="summary"></div>
+  <div id="out"></div>
+
+  <p class="note">Sample listings for demonstration. Edit the <code>MOVIES</code> and <code>THEATRES</code> lists at the top of the script to use real titles, dates and theatres.</p>
+</div>
+
+<script>
+// ---------- Sample data (replace with real listings) ----------
+const DAY = 86400000, today = new Date(); today.setHours(0,0,0,0);
+const MOVIES = {
+  m1:{t:"Monsoon Express",lang:"Tamil",genre:"Thriller",mins:142,off:3},
+  m2:{t:"The Last Lighthouse",lang:"English",genre:"Drama",mins:128,off:5},
+  m3:{t:"Kaadu Raja",lang:"Tamil",genre:"Adventure",mins:155,off:8},
+  m4:{t:"Neelakasham",lang:"Malayalam",genre:"Romance",mins:134,off:10},
+  m5:{t:"Hill Station 37",lang:"Kannada",genre:"Mystery",mins:131,off:12},
+  m6:{t:"Rangoli Nights",lang:"Hindi",genre:"Comedy",mins:139,off:15},
+  m7:{t:"Orbit Zero",lang:"English",genre:"Sci-Fi",mins:147,off:19},
+  m8:{t:"Veera Kalam",lang:"Telugu",genre:"Action",mins:158,off:24}
+};
+const TIMES = [["10:30 AM","2:15 PM","6:45 PM"],["11:00 AM","3:00 PM","7:30 PM","10:45 PM"],["9:45 AM","1:30 PM","5:15 PM","9:00 PM"]];
+const STATES = {
+  "Tamil Nadu":["Coimbatore","Chennai","Madurai"],
+  "Kerala":["Ernakulam","Thiruvananthapuram"],
+  "Karnataka":["Bengaluru Urban","Mysuru"]
+};
+const THEATRES = {
+  "Coimbatore":[["Lotus Cinemas","Town Centre",["m1","m2","m3","m6"]],["Starlight Screens","Riverside Road",["m1","m3","m7","m8"]],["Gandhi Park Talkies","Old Market",["m1","m3"]]],
+  "Chennai":[["Marina Multiplex","Beach Road",["m1","m2","m7","m8","m6"]],["Central Picture House","Central Square",["m1","m3","m4"]],["Palm Grove Cinemas","Tech Corridor",["m2","m7","m6"]]],
+  "Madurai":[["Temple View Theatre","North Street",["m1","m3","m8"]],["Vaigai Screens","Riverside",["m1","m2","m3"]]],
+  "Ernakulam":[["Backwater Cinemas","Marine Drive",["m4","m2","m7"]],["Spice Route Multiplex","Mall Road",["m4","m1","m6","m7"]]],
+  "Thiruvananthapuram":[["Coastline Talkies","East Fort",["m4","m2"]],["Capital Screens","Statue Junction",["m4","m7","m1"]]],
+  "Bengaluru Urban":[["Garden City Multiplex","Tech Park",["m5","m2","m7","m6","m8"]],["Silk Board Cinemas","South Ring",["m5","m1","m7"]],["Cubbon Picture Palace","Central",["m5","m2","m6"]]],
+  "Mysuru":[["Palace View Theatre","Old Town",["m5","m6","m2"]],["Chamundi Screens","Hill Road",["m5","m8","m7"]]]
+};
+// ---------- App ----------
+const $ = id => document.getElementById(id);
+const fmt = o => { const d = new Date(+today + o*DAY); return {d:d.getDate(), m:d.toLocaleString("en",{month:"short"}), w:d.toLocaleString("en",{weekday:"short"})}; };
+let lang = "All", view = "theatre"; const saved = new Set();
+
+function fillStates(){ $("state").innerHTML = Object.keys(STATES).map(s=>`<option>${s}</option>`).join(""); fillDistricts(); }
+function fillDistricts(){ $("district").innerHTML = STATES[$("state").value].map(d=>`<option>${d}</option>`).join(""); lang="All"; render(); }
+
+function langs(list){
+  const set = ["All", ...new Set(list.flatMap(t=>t[2].map(id=>MOVIES[id].lang)))];
+  $("langs").innerHTML = set.map(l=>`<button class="chip" aria-pressed="${l===lang}" data-l="${l}">${l}</button>`).join("");
+  $("langs").querySelectorAll("button").forEach(b=>b.onclick=()=>{lang=b.dataset.l;render()});
+}
+function filmRow(id, tIdx, showTimes){
+  const m = MOVIES[id], f = fmt(m.off), on = saved.has(id);
+  return `<div class="film">
+    <div class="date" aria-label="Releases ${f.w} ${f.d} ${f.m}"><b>${f.d}</b><span>${f.m} · ${f.w}</span></div>
+    <div><h4>${m.t}</h4><div class="meta">${m.lang}, ${m.genre}, ${m.mins} min</div>
+    ${showTimes?`<div class="times" aria-label="Show times">${TIMES[tIdx%3].map(x=>`<span>${x}</span>`).join("")}</div>`:""}</div>
+    <button class="remind" aria-pressed="${on}" data-id="${id}">${on?"Reminder set":"Remind me"}</button></div>`;
+}
+function render(){
+  const dist = $("district").value, list = THEATRES[dist] || [];
+  langs(list);
+  $("t-theatre").setAttribute("aria-selected", view==="theatre");
+  $("t-movie").setAttribute("aria-selected", view==="movie");
+  $("saved").textContent = saved.size ? `${saved.size} reminder${saved.size>1?"s":""} set` : "";
+  const ok = id => lang==="All" || MOVIES[id].lang===lang;
+  let html = "";
+  if(view==="theatre"){
+    const rows = list.map((t,i)=>({t,i,ids:t[2].filter(ok).sort((a,b)=>MOVIES[a].off-MOVIES[b].off)})).filter(r=>r.ids.length);
+    $("summary").textContent = `${rows.length} theatre${rows.length!==1?"s":""} in ${dist}`;
+    html = rows.map(r=>`<section class="theatre"><div class="thead"><h3>${r.t[0]}</h3><p>${r.t[1]}, ${dist}</p></div>${r.ids.map(id=>filmRow(id,r.i,true)).join("")}</section>`).join("");
+  } else {
+    const ids = [...new Set(list.flatMap(t=>t[2]))].filter(ok).sort((a,b)=>MOVIES[a].off-MOVIES[b].off);
+    $("summary").textContent = `${ids.length} upcoming release${ids.length!==1?"s":""} in ${dist}`;
+    html = ids.map(id=>{
+      const where = list.filter(t=>t[2].includes(id));
+      return `<section class="theatre">${filmRow(id,0,false)}<div class="thead" style="border-top:2px dashed var(--line);border-bottom:0"><p><b>Showing at:</b> ${where.map(t=>`${t[0]} (${t[1]})`).join("; ")}</p></div></section>`;
+    }).join("");
+  }
+  $("out").innerHTML = html || `<div class="empty">No upcoming ${lang} releases in ${dist} yet. Choose another language or district.</div>`;
+  $("out").querySelectorAll(".remind").forEach(b=>b.onclick=()=>{const id=b.dataset.id; saved.has(id)?saved.delete(id):saved.add(id); render();});
+}
+$("state").onchange = fillDistricts;
+$("district").onchange = ()=>{lang="All";render()};
+$("t-theatre").onclick = ()=>{view="theatre";render()};
+$("t-movie").onclick = ()=>{view="movie";render()};
+fillStates();
+</script>
+</body>
+</html>
